@@ -11,6 +11,7 @@ import com.vitorbionic.domain.Article;
 import com.vitorbionic.domain.Tag;
 import com.vitorbionic.domain.dto.ArticleDTO;
 import com.vitorbionic.domain.dto.TagDTO;
+import com.vitorbionic.exceptions.ResourceNotFoundException;
 import com.vitorbionic.repositories.ArticleRepository;
 
 @Service
@@ -44,8 +45,18 @@ public class ArticleService {
     
     public List<ArticleDTO> findAll() {
         
-        logger.info("Finding all people!");
+        logger.info("Finding all articles!");
         
         return convertToDtoList(repository.findAll());
+    }
+    
+    public ArticleDTO findById(Long id) {
+        
+        logger.info("Finding one article!");
+        
+        Article entity = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No records found for this ID!"));
+        
+        return convertToDto(entity);
     }
 }
