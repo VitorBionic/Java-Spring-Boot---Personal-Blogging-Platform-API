@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vitorbionic.domain.dto.ArticleDTO;
@@ -26,6 +27,11 @@ public class ArticleController {
     @GetMapping
     public List<ArticleDTO> findAll() {
         return service.findAll();
+    }
+    
+    @GetMapping("/findArticlesWithFilter")
+    public List<ArticleDTO> findArticlesWithFilter(@RequestParam (value = "date", defaultValue = "1800-01-01T00:00:00.00Z") String instant, @RequestParam (value = "tagsSeparatedBySemicolons", defaultValue = "") String tags) {
+        return service.findArticlesWithFilter(instant, tags);
     }
     
     @GetMapping(value = "/{id}")

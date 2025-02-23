@@ -1,6 +1,9 @@
 package com.vitorbionic.services;
 
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -45,6 +48,46 @@ public class ArticleService {
                         ).collect(Collectors.toList());
     }
     
+    public List<ArticleDTO> findArticlesWithFilter(String instant, String tags) {
+        
+        logger.info("Finding articles by filtering!");
+        
+        instant = formatInstant(instant);
+        
+        List<ArticleDTO> dtoListSemiFiltered = articleRepository.findArticlesWithFilter(Instant.parse(instant)).stream()
+                .map(article -> new ArticleDTO(
+                        article.getId(),
+                        article.getTitle(), 
+                        article.getContent(),
+                        article.getPublicationDate(),
+                        article.getTags().stream().map(tag -> new TagDTO(
+                                tag.getId(),
+                                tag.getDescription())
+                                ).collect(Collectors.toList()))
+                        ).collect(Collectors.toList());
+        
+        String[] tagsArr = tags.split(";");
+        
+        Predicate<ArticleDTO> filter = (dto) -> {
+            if (tagsArr.length == 1 && tagsArr[0].isEmpty())
+                return true;
+            for (String tag : tagsArr) {
+                boolean flag = false;
+                for (TagDTO tagDto : dto.tags()) {
+                    if (tag.equals(tagDto.description())) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag)
+                    return false;
+            }
+            return true;
+        };
+        
+        return dtoListSemiFiltered.stream().filter(filter).collect(Collectors.toList());
+    }
+
     public ArticleDTO findById(Long id) {
         
         logger.info("Finding one article!");
@@ -136,5 +179,15 @@ public class ArticleService {
                  .orElseThrow(() -> new ResourceNotFoundException("No records found for this ID!"));
          
          articleRepository.delete(entity);
+    }
+    
+    private String formatInstant(String instant) {
+        if (instant.matches("^\\d{4}-\\d{2}-\\d{2}$"))
+            instant += "T00:00:00.00Z";
+        else if (instant.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"))
+            instant += ".00Z";
+        else
+            throw new InvalidRequestException("Invalid date format: " + instant);
+        return instant;
     }
 }
